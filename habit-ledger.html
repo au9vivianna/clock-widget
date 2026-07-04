@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Habit Ledger</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@340;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink: #0E1B2C;
+    --ink-2: #16283F;
+    --parchment: #EDE6D6;
+    --parchment-dim: #A9A18E;
+    --brass: #C9A227;
+    --teal: #3A5A6B;
+    --row: #17293F;
+    --row-alt: #142438;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background: transparent;
+  }
+
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    padding:20px;
+  }
+
+  .card{
+    width:100%;
+    max-width:520px;
+    background: radial-gradient(120% 140% at 50% -10%, var(--ink-2) 0%, var(--ink) 60%);
+    border:1px solid #24374d;
+    border-radius:14px;
+    padding:28px 26px 22px;
+    color:var(--parchment);
+  }
+
+  .header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+
+  .title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+  }
+
+  .week{
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  .rule{
+    height:1px;
+    background:var(--teal);
+    opacity:.6;
+    margin:14px 0 16px;
+  }
+
+  .daycols{
+    display:grid;
+    grid-template-columns: 1fr repeat(7, 28px);
+    gap:6px;
+    padding:0 10px 8px;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  .daycols span{ text-align:center; }
+  .daycols .lbl{ text-align:left; }
+
+  .rows{ display:flex; flex-direction:column; gap:2px; }
+
+  .habit-row{
+    display:grid;
+    grid-template-columns: 1fr repeat(7, 28px);
+    align-items:center;
+    gap:6px;
+    padding:8px 10px;
+    border-radius:8px;
+  }
+
+  .habit-row:nth-child(odd){ background:var(--row); }
+  .habit-row:nth-child(even){ background:var(--row-alt); }
+
+  .habit-name{
+    font-size:13px;
+    color:var(--parchment);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .streak{
+    font-size:10px;
+    color:var(--brass);
+    flex-shrink:0;
+  }
+
+  .remove{
+    background:none;
+    border:none;
+    color:var(--parchment-dim);
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+    padding:0 2px;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+
+  .habit-row:hover .remove{ opacity:1; }
+
+  .dot{
+    width:22px;
+    height:22px;
+    margin:0 auto;
+    border-radius:50%;
+    border:1px solid var(--teal);
+    background:transparent;
+    cursor:pointer;
+    transition: background .15s ease, border-color .15s ease, transform .1s ease;
+  }
+
+  .dot:hover{ transform: scale(1.1); }
+
+  .dot.done{
+    background:var(--brass);
+    border-color:var(--brass);
+  }
+
+  .dot.today{
+    box-shadow: 0 0 0 2px rgba(201,162,39,.35);
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--parchment-dim);
+    font-size:12px;
+    padding:18px 0;
+  }
+
+  .add-row{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+  }
+
+  .add-row input{
+    flex:1;
+    background:var(--row);
+    border:1px solid #24374d;
+    border-radius:8px;
+    padding:9px 12px;
+    color:var(--parchment);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    outline:none;
+  }
+
+  .add-row input::placeholder{ color:var(--parchment-dim); }
+  .add-row input:focus{ border-color:var(--teal); }
+
+  .add-row button{
+    background:var(--brass);
+    border:none;
+    border-radius:8px;
+    padding:0 16px;
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  .add-row button:hover{ filter:brightness(1.08); }
+
+  @media (max-width:420px){
+    .card{ padding:22px 14px 18px; }
+    .title{ font-size:22px; }
+    .daycols, .habit-row{ grid-template-columns: 1fr repeat(7, 24px); gap:4px; }
+    .dot{ width:19px; height:19px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="title">Ledger</div>
+      <div class="week" id="weekLabel">—</div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="daycols" id="dayCols"></div>
+    <div class="rows" id="rows"></div>
+    <div class="empty" id="emptyMsg" style="display:none;">No habits logged yet. Add your first one below.</div>
+
+    <div class="add-row">
+      <input type="text" id="newHabit" placeholder="Add a habit…" maxlength="40">
+      <button id="addBtn">Add</button>
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'ledger-habits-v1';
+  const DAY_LABELS = ['S','M','T','W','T','F','S'];
+
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { habits: [] }; // habits: [{id, name, ticks: {'YYYY-MM-DD': true}}]
+  }
+
+  function saveData(data){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+
+  function toKey(d){
+    return d.toISOString().slice(0,10);
+  }
+
+  function startOfWeek(d){
+    const copy = new Date(d);
+    const day = copy.getDay(); // 0 = Sunday
+    copy.setDate(copy.getDate() - day);
+    copy.setHours(0,0,0,0);
+    return copy;
+  }
+
+  function getWeekDates(){
+    const start = startOfWeek(new Date());
+    const dates = [];
+    for(let i=0;i<7;i++){
+      const d = new Date(start);
+      d.setDate(start.getDate()+i);
+      dates.push(d);
+    }
+    return dates;
+  }
+
+  function calcStreak(habit, weekDates){
+    // consecutive days ending today (or yesterday if today not done yet)
+    let streak = 0;
+    let cursor = new Date();
+    cursor.setHours(0,0,0,0);
+    while(true){
+      const key = toKey(cursor);
+      if(habit.ticks[key]){
+        streak++;
+        cursor.setDate(cursor.getDate()-1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  let data = loadData();
+
+  const rowsEl = document.getElementById('rows');
+  const dayColsEl = document.getElementById('dayCols');
+  const weekLabelEl = document.getElementById('weekLabel');
+  const emptyMsgEl = document.getElementById('emptyMsg');
+  const newHabitInput = document.getElementById('newHabit');
+  const addBtn = document.getElementById('addBtn');
+
+  function render(){
+    const weekDates = getWeekDates();
+    const todayKey = toKey(new Date());
+
+    weekLabelEl.textContent = weekDates[0].toLocaleDateString(undefined,{month:'short', day:'numeric'}) +
+      ' – ' + weekDates[6].toLocaleDateString(undefined,{month:'short', day:'numeric'});
+
+    dayColsEl.innerHTML = '<span class="lbl"></span>' +
+      weekDates.map((d,i) => `<span>${DAY_LABELS[i]}</span>`).join('');
+
+    rowsEl.innerHTML = '';
+    emptyMsgEl.style.display = data.habits.length ? 'none' : 'block';
+
+    data.habits.forEach(habit => {
+      const row = document.createElement('div');
+      row.className = 'habit-row';
+
+      const nameCell = document.createElement('div');
+      nameCell.className = 'habit-name';
+      const streak = calcStreak(habit, weekDates);
+      nameCell.innerHTML = `<span>${escapeHtml(habit.name)}</span>` +
+        (streak > 0 ? `<span class="streak">${streak}d</span>` : '');
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove';
+      removeBtn.textContent = '✕';
+      removeBtn.title = 'Remove habit';
+      removeBtn.onclick = () => {
+        data.habits = data.habits.filter(h => h.id !== habit.id);
+        saveData(data);
+        render();
+      };
+      nameCell.appendChild(removeBtn);
+      row.appendChild(nameCell);
+
+      weekDates.forEach(d => {
+        const key = toKey(d);
+        const dot = document.createElement('button');
+        dot.className = 'dot' + (habit.ticks[key] ? ' done' : '') + (key === todayKey ? ' today' : '');
+        dot.title = d.toLocaleDateString();
+        dot.onclick = () => {
+          if(habit.ticks[key]) delete habit.ticks[key];
+          else habit.ticks[key] = true;
+          saveData(data);
+          render();
+        };
+        row.appendChild(dot);
+      });
+
+      rowsEl.appendChild(row);
+    });
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function addHabit(){
+    const name = newHabitInput.value.trim();
+    if(!name) return;
+    data.habits.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      name,
+      ticks: {}
+    });
+    saveData(data);
+    newHabitInput.value = '';
+    render();
+  }
+
+  addBtn.addEventListener('click', addHabit);
+  newHabitInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') addHabit();
+  });
+
+  render();
+</script>
+
+</body>
+</html>
