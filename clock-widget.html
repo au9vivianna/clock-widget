@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@340;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink: #0E1B2C;
+    --ink-2: #16283F;
+    --parchment: #EDE6D6;
+    --parchment-dim: #A9A18E;
+    --brass: #C9A227;
+    --teal: #3A5A6B;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    height:100%;
+    background: transparent;
+  }
+
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .card{
+    width:100%;
+    max-width:420px;
+    background: radial-gradient(120% 140% at 50% -10%, var(--ink-2) 0%, var(--ink) 60%);
+    border:1px solid #24374d;
+    border-radius:14px;
+    padding:36px 28px 26px;
+    text-align:center;
+    color:var(--parchment);
+    user-select:none;
+  }
+
+  .zone{
+    font-size:11px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin-bottom:14px;
+  }
+
+  .time{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(40px, 12vw, 64px);
+    line-height:1;
+    letter-spacing:.01em;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:2px;
+  }
+
+  .rule{
+    position:relative;
+    height:1px;
+    background:var(--teal);
+    margin:18px 0 16px;
+    opacity:.6;
+  }
+
+  .date{
+    font-size:12px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  .date b{
+    color:var(--parchment);
+    font-weight:500;
+  }
+
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="zone" id="zone">—</div>
+    <div class="time">
+      <span id="hm">00:00</span>
+    </div>
+    <div class="rule"></div>
+    <div class="date" id="date">—</div>
+  </div>
+
+<script>
+  const hmEl = document.getElementById('hm');
+  const dateEl = document.getElementById('date');
+  const zoneEl = document.getElementById('zone');
+
+  const pad = n => String(n).padStart(2,'0');
+
+  function render(){
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+
+    hmEl.textContent = `${pad(h)}:${pad(m)}`;
+
+    dateEl.innerHTML = now.toLocaleDateString(undefined, {
+      weekday:'long', month:'long', day:'numeric', year:'numeric'
+    }).replace(/^(\w+)/, '<b>$1</b>');
+
+    try{
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g,' ');
+      zoneEl.textContent = tz;
+    }catch(e){
+      zoneEl.textContent = '';
+    }
+  }
+
+  render();
+  setInterval(render, 5000);
+</script>
+
+</body>
+</html>
